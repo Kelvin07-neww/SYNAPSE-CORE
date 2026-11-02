@@ -1,0 +1,6 @@
+2026/10/31-13:16:07.547 3359 Creating DB /home/kevinn/Downloads/synapse-core/bot/.wwebjs_auth/session/Default/WebStorage/2/IndexedDB/indexeddb.leveldb since it was missing.
+2026/10/31-13:16:07.554 3359 Reusing MANIFEST /home/kevinn/Downloads/synapse-core/bot/.wwebjs_auth/session/Default/WebStorage/2/IndexedDB/indexeddb.leveldb/MANIFEST-000001
+2026/10/31-13:16:10.023 335a Level-0 table #5: started
+2026/10/31-13:16:10.025 335a Level-0 table #5: 834 bytes OK
+2026/10/31-13:16:10.027 335a Delete type=0 #3
+2026/10/31-13:16:10.027 335a Manual compaction at level-0 from (begin) .. (end); will stop at (end)

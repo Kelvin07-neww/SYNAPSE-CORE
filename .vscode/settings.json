@@ -1,0 +1,6 @@
+{
+    "chat.customizations.mcpServerMigration.enabled": false,
+    "fiveServer.browser": [
+        "firefox"
+    ]
+}

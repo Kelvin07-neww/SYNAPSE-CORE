@@ -1,0 +1,7 @@
+{
+  "name": "synapse-core-bot",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node adapters/whatsapp.js", "cli": "node cli.js" },
+  "dependencies": { "qrcode-terminal": "^0.12.0", "whatsapp-web.js": "^1.26.0" }
+}

@@ -1,0 +1,59 @@
+[
+  {
+    "id": "ORD-20261031-001",
+    "status": "baru",
+    "createdAt": "2026-10-31T05:45:32.109Z",
+    "type": "brief",
+    "source": "whatsapp-bot",
+    "customer": {
+      "phone": "cli-user",
+      "name": ""
+    },
+    "brief": {
+      "name": "Kevin",
+      "project": "Web Application",
+      "platform": "Android",
+      "budget": "Rp1–3 Juta",
+      "deadline": "7 Hari",
+      "description": "Membuat aplikasi perpustakaan"
+    }
+  },
+  {
+    "id": "ORD-20261031-002",
+    "status": "baru",
+    "createdAt": "2026-10-31T06:13:56.770Z",
+    "type": "brief",
+    "source": "whatsapp-bot",
+    "customer": {
+      "phone": "87510596194414",
+      "name": "n"
+    },
+    "brief": {
+      "name": "kelvin",
+      "project": "Mobile Application",
+      "platform": "Android",
+      "budget": "Rp1–3 Juta",
+      "deadline": "10 Hari",
+      "description": "Agahsgha"
+    }
+  },
+  {
+    "id": "ORD-20261031-003",
+    "status": "baru",
+    "createdAt": "2026-10-31T06:18:49.620Z",
+    "type": "brief",
+    "source": "whatsapp-bot",
+    "customer": {
+      "phone": "271609554288848",
+      "name": "vinn"
+    },
+    "brief": {
+      "name": "kevin",
+      "project": "Website",
+      "platform": "Web",
+      "budget": "Rp1–3 Juta",
+      "deadline": "3",
+      "description": "hsvhb"
+    }
+  }
+]
