@@ -2,10 +2,10 @@ export const siteConfig = {
   name: "SYNAPSE CORE",
   tagline: "Software Development & Digital Solution",
   whatsapp: "62xxxxxxxxxxxx", // ganti dengan nomor WhatsApp (format internasional tanpa +)
-  email: "vinnk298@gmail.com",
+  email: "@gmail.com",
   github: "https://github.com/Kelvin07-neww",
-  instagram: "https://www.instagram.com/vinn_klvn/",
-  linkedin: "https://www.linkedin.com/in/jordan-kelvin-gabriel-regar/",
+  instagram: "",
+  linkedin: "",
 };
 
 // id = id section di halaman Home
