@@ -18,7 +18,7 @@ export function parseWebMessage(text) {
     const f = readFields(text);
     return { type: "brief", brief: { name: f.nama || "-", project: f.project || "-", platform: f.platform || "-", budget: f.budget || "-", deadline: f.deadline || "-", description: f.deskripsi || "-" } };
   }
-  const plan = text.match(/tertarik dengan paket (\w+)/i);
-  if (plan) return { type: "plan", name: plan[1] };
+  const plan = text.match(/^paket:\s*(.+)$/im) || text.match(/tertarik dengan paket\s+(\w+)/i);
+  if (plan) return { type: "plan", name: plan[1].trim() };
   return null;
 }

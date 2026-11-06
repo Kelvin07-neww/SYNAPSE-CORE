@@ -7,14 +7,19 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "bot:cli": "node bot/cli.js",
+    "server": "node --env-file=.env server/index.js",
+    "all": "concurrently --names backend,frontend --kill-others-on-fail \"npm run server:bot\" \"npm run dev\"",
+    "server:bot": "cross-env WHATSAPP_BOT_ENABLED=true node --env-file=.env server/index.js",
+    "bot:cli": "node --env-file=.env bot/cli.js",
     "bot:install": "npm install --prefix bot",
-    "bot": "npm start --prefix bot",
-    "start": "BROWSER=firefox react-scripts start"
+    "bot": "node --env-file=.env bot/adapters/whatsapp.js",
+    "start": "vite"
   },
   "dependencies": {
+    "express": "^5.3.0",
     "framer-motion": "^11.11.17",
     "lucide-react": "^0.468.0",
+    "multer": "^2.5.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0"
@@ -22,6 +27,7 @@
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
     "autoprefixer": "^10.4.20",
+    "concurrently": "^10.0.6",
     "cross-env": "^10.1.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",

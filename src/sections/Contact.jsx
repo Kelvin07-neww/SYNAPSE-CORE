@@ -2,7 +2,6 @@ import { useState } from "react";
 import { MessageCircle, Send } from "lucide-react";
 import SectionHeading from "../components/SectionHeading.jsx";
 import GlassCard from "../components/GlassCard.jsx";
-import { siteConfig } from "../config/site.js";
 import { budgets, platformOptions, projectTypes } from "../data/contact.js";
 import { buildBriefMessage, buildWhatsAppUrl } from "../lib/whatsapp.js";
 
@@ -21,24 +20,32 @@ function Field({ label, id, children }) {
 export default function Contact() {
   const [form, setForm] = useState(initialForm);
   const [sent, setSent] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
   const update = (e) => {
     setSent(false);
+    setError("");
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   };
 
   const message = buildBriefMessage(form);
 
-  // Tanpa backend: brief dikirim lewat aplikasi email pengguna.
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const body = `${message}\n\nEmail: ${form.email}\nWhatsApp: ${form.whatsapp}`;
-    window.location.href = `mailto:${siteConfig.email}?subject=${encodeURIComponent(`Project Brief — ${form.project}`)}&body=${encodeURIComponent(body)}`;
-    setSent(true);
+    setSending(true); setError("");
+    try {
+      const response = await fetch("/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      setSent(`Brief berhasil dikirim dengan nomor pesanan ${data.order.id}. Admin akan menghubungi Anda.`);
+      setForm(initialForm);
+    } catch (requestError) { setError(requestError.message || "Brief gagal dikirim. Silakan coba lagi."); }
+    finally { setSending(false); }
   };
 
   return (
-    <section id="contact" className="scroll-mt-24 px-6 py-20">
+    <section id="contact" className="scroll-mt-24 px-4 py-16 sm:px-6 sm:py-20">
       <div className="mx-auto max-w-3xl">
         <SectionHeading eyebrow="Contact" title="Ceritakan Project Anda" description="Isi brief singkat. Kami balas dengan estimasi biaya, teknologi, dan timeline." />
         <GlassCard className="p-6 sm:p-8">
@@ -62,15 +69,16 @@ export default function Contact() {
               </Field>
             </div>
             <div className="flex flex-col gap-3 sm:col-span-2 sm:flex-row">
-              <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_0_28px_rgba(59,130,246,0.35)] transition hover:brightness-110 active:scale-95 sm:w-auto">
-                <Send size={16} aria-hidden="true" /> Kirim Project Brief
+              <button type="submit" disabled={sending} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-600 via-blue-600 to-cyan-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_0_28px_rgba(59,130,246,0.35)] transition hover:brightness-110 active:scale-95 disabled:opacity-60 sm:w-auto">
+                <Send size={16} aria-hidden="true" /> {sending ? "Mengirim..." : "Kirim Project Brief"}
               </button>
               <a href={buildWhatsAppUrl(message)} target="_blank" rel="noopener noreferrer"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-semibold text-slate-100 transition hover:bg-white/10 sm:w-auto">
                 <MessageCircle size={16} aria-hidden="true" /> Chat via WhatsApp
               </a>
             </div>
-            {sent && <p role="status" className="text-sm text-cyan-300 sm:col-span-2">Aplikasi email Anda terbuka dengan brief terisi. Tekan kirim di sana untuk menyelesaikan.</p>}
+            {sent && <p role="status" className="text-sm text-cyan-300 sm:col-span-2">{sent}</p>}
+            {error && <p role="alert" className="text-sm text-red-300 sm:col-span-2">{error}</p>}
           </form>
         </GlassCard>
       </div>

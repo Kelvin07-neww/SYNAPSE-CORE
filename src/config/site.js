@@ -1,10 +1,10 @@
 export const siteConfig = {
   name: "SYNAPSE CORE",
   tagline: "Software Development & Digital Solution",
-  whatsapp: "62xxxxxxxxxxxx", // ganti dengan nomor WhatsApp (format internasional tanpa +)
+  whatsapp: "6281231589457", // ganti dengan nomor WhatsApp (format internasional tanpa +)
   email: "@gmail.com",
   github: "https://github.com/Kelvin07-neww",
-  instagram: "",
+  instagram: "https://www.instagram.com/vinn_klvn/",
   linkedin: "",
 };
 

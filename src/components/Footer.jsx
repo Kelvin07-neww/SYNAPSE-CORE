@@ -1,7 +1,8 @@
-import { Github, Instagram, Linkedin, MessageCircle, Mail, Cpu } from "lucide-react";
+import { Github, Instagram, Linkedin, MessageCircle, Mail } from "lucide-react";
 import { navLinks, siteConfig } from "../config/site.js";
 import { buildWhatsAppUrl } from "../lib/whatsapp.js";
 import useSectionNav from "../lib/useSectionNav.js";
+import logo from "../images/logo.png";
 
 const footerLinks = navLinks.filter((l) => ["services", "pricing", "portfolio", "technologies", "faq", "contact"].includes(l.id));
 
@@ -17,12 +18,12 @@ export default function Footer() {
 
   return (
     <footer className="border-t border-white/10 bg-ink-950/80 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-6 py-14">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14">
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
           <div className="flex max-w-sm flex-col gap-4">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 via-blue-600 to-cyan-500">
-                <Cpu size={20} className="text-white" aria-hidden="true" />
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-black">
+                <img src={logo} alt="" className="h-full w-full object-contain" />
               </span>
               <span className="font-display font-bold text-white">{siteConfig.name}</span>
             </div>

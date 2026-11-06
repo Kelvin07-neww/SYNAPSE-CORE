@@ -5,7 +5,17 @@ import { fadeUp } from "../lib/animations.js";
 import { buildWhatsAppUrl } from "../lib/whatsapp.js";
 
 export default function PricingCard({ plan }) {
-  const message = `Halo, saya tertarik dengan paket ${plan.name} (${plan.prefix} ${plan.price}). Bisa dibantu konsultasi?`.replace("  ", " ");
+  const price = [plan.prefix, plan.price].filter(Boolean).join(" ");
+  const message = [
+    "Halo, saya tertarik dengan paket berikut.",
+    "",
+    `Paket: ${plan.name}`,
+    `Harga awal: ${price}`,
+    "Yang saya dapat:",
+    ...plan.features.map((feature) => `- ${feature}`),
+    "",
+    "Mohon jelaskan detail paket ini dan bantu konsultasi kebutuhan project saya.",
+  ].join("\n");
   return (
     <motion.div variants={fadeUp} className="h-full">
       <div className={`h-full rounded-2xl p-px ${plan.popular ? "bg-gradient-to-b from-purple-500 via-blue-500 to-cyan-400 shadow-[0_0_48px_rgba(99,102,241,0.25)]" : "bg-white/10"}`}>

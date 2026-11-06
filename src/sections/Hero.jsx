@@ -69,13 +69,13 @@ app.deploy(); // ✓ live`}
 
 export default function Hero() {
   return (
-    <section id="home" className="scroll-mt-24 px-6 pb-20 pt-36 sm:pt-40 lg:pb-28">
+    <section id="home" className="scroll-mt-24 px-4 pb-16 pt-28 sm:px-6 sm:pt-40 lg:pb-28">
       <motion.div variants={stagger(0.1)} initial="hidden" animate="show" className="mx-auto grid max-w-7xl items-center gap-14 lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-7">
           <motion.span variants={fadeUp} className="w-fit rounded-full border border-cyan-400/20 bg-white/5 px-4 py-1.5 text-xs font-medium tracking-wider text-cyan-300 backdrop-blur">
             WEB • MOBILE • DESKTOP • CUSTOM SOFTWARE
           </motion.span>
-          <motion.h1 variants={fadeUp} className="font-display text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
+          <motion.h1 variants={fadeUp} className="font-display text-3xl font-extrabold leading-[1.1] tracking-tight text-white sm:text-5xl lg:text-6xl">
             Bangun Aplikasi Digital yang <span className="text-gradient">Sesuai dengan Kebutuhan</span> Anda
           </motion.h1>
           <motion.p variants={fadeUp} className="max-w-2xl text-base text-slate-300 sm:text-lg">

@@ -1,18 +1,28 @@
 // Inti chatbot, tidak bergantung pada platform WhatsApp tertentu.
-// handleMessage({ from, text }) -> { replies: string[], notifyAdmin?: string }
+// handleMessage({ from, text }) -> Promise<{ replies: string[], notifyAdmin?: string }>
 import { calculateEstimate, complexities, features, platforms } from "../src/data/estimator.js";
 import { faqs } from "../src/data/faq.js";
 import { siteConfig } from "../src/config/site.js";
-import { getOrder, listOrders, saveOrder } from "./orders.js";
+import { getOrder, listCustomerOrders, listOrders, normalizePhone, saveOrder } from "./orders.js";
 import { parseWebMessage } from "./parsers.js";
+import { findConversationReply } from "./conversation.js";
+import { askAI } from "./ai.js";
+import { findKnowledge, recommendPlan } from "./knowledge.js";
+import { rememberCustomer } from "./memory.js";
 import * as msg from "./messages.js";
+import { findCustomerPayment, savePaymentProofBuffer } from "../server/admin.js";
 
 const SESSION_TTL = 60 * 60 * 1000;
 const sessions = new Map();
 
 const freshSession = () => ({ state: "idle", data: {}, paused: false, touched: Date.now() });
 
+function pruneSessions(now) {
+  for (const [id, session] of sessions) if (now - session.touched > SESSION_TTL) sessions.delete(id);
+}
+
 function getSession(id) {
+  if (sessions.size > 500) pruneSessions(Date.now());
   const s = sessions.get(id);
   if (!s || Date.now() - s.touched > SESSION_TTL) {
     const created = freshSession();
@@ -91,6 +101,21 @@ function handleEstimator(s, text) {
   return reply(result);
 }
 
+async function handlePlanConsultation(s, text, customer) {
+  if (/^(admin|9|cs|operator)$/i.test(text.trim())) {
+    reset(s);
+    return handleMenuChoice(s, "9", customer);
+  }
+  if (/^(brief|8|pesan project|order)$/i.test(text.trim())) return startBrief(s);
+  const planName = s.data.planName;
+  const memory = rememberCustomer(customer, text, { selectedPlan: planName });
+  const knowledge = findKnowledge(text);
+  const aiReply = await askAI({ message: text.trim(), selectedPlan: planName, memory, knowledge });
+  const recommendation = recommendPlan(text, memory);
+  reset(s);
+  return reply(aiReply || (recommendation ? msg.recommendationText(recommendation) : msg.planConsultationText(planName, text.trim())));
+}
+
 const keywordRoutes = [
   [/layanan|service|jasa apa/i, "1"],
   [/harga|paket|biaya|tarif|pricing/i, "2"],
@@ -100,7 +125,9 @@ const keywordRoutes = [
   [/teknologi|stack|bahasa pemrograman/i, "6"],
   [/faq|tanya/i, "7"],
   [/brief|pesan project|order|pesan/i, "8"],
-  [/admin|cs|manusia|operator/i, "9"],
+  [/^(?:admin|cs|manusia|operator)$/i, "9"],
+  [/(?:hubungi|bicara|chat|sambungkan|kontak).{0,30}\b(?:admin|cs|manusia|operator)\b/i, "9"],
+  [/status pesanan|cek status|status order/i, "10"],
 ];
 
 function handleMenuChoice(s, choice, customer) {
@@ -114,23 +141,35 @@ function handleMenuChoice(s, choice, customer) {
     case "7": s.state = "faq"; return reply(msg.faqListText());
     case "8": return startBrief(s);
     case "9": s.paused = true; return { replies: [msg.handoffText()], notifyAdmin: `Pelanggan meminta bicara dengan admin.\nKontak: wa.me/${customer.phone}` };
+    case "10": return reply(msg.customerOrderStatusText(listCustomerOrders(customer.phone)));
     default: return null;
   }
 }
 
 const toPhone = (id) => String(id).replace(/@.*/, "");
+const isProjectNeed = (text) => text.length >= 40 && /\b(website|web|aplikasi|mobile|android|ios|dashboard|api|payment|pembayaran|fitur|sistem|kasir|toko|laporan|database|ai)\b/i.test(text);
 
-export function handleMessage({ from, text, phone, name }) {
+export async function handleMessage({ from, text, phone, name }) {
   const input = (text || "").trim();
   if (!input) return { replies: [] };
   const s = getSession(from);
   const lower = input.toLowerCase();
   const customer = { phone: phone || toPhone(from), name: name || "" };
+  const memory = rememberCustomer(customer, input, { chatId: from });
 
   // Perintah khusus admin
   if (customer.phone === siteConfig.whatsapp) {
     const cmd = lower.match(/^pesanan(?:\s+(\S+))?$/);
     if (cmd) return reply(cmd[1] ? msg.orderDetailText(getOrder(cmd[1])) : msg.orderListText(listOrders(5)));
+  }
+
+  // Pelanggan hanya boleh melihat pesanan yang dibuat dari nomor WhatsApp-nya sendiri.
+  const statusCommand = input.match(/^status(?:\s+(ORD-[\w-]+))?$/i);
+  if (statusCommand) {
+    if (!statusCommand[1]) return reply(msg.customerOrderStatusText(listCustomerOrders(customer.phone)));
+    const order = getOrder(statusCommand[1]);
+    if (!order || normalizePhone(order.customer?.phone) !== normalizePhone(customer.phone)) return reply("Pesanan tidak ditemukan untuk nomor WhatsApp ini.");
+    return reply(msg.customerOrderDetailStatusText(order));
   }
 
   // 1) Pesan otomatis dari tombol WhatsApp di website
@@ -139,7 +178,13 @@ export function handleMessage({ from, text, phone, name }) {
     reset(s);
     if (web.type === "plan") {
       const text = msg.planText(web.name);
-      if (text) return reply(text);
+      if (text) {
+        s.state = "plan_consultation";
+        s.data = { planName: web.name };
+        rememberCustomer(customer, input, { selectedPlan: web.name });
+        // Klik paket hanya memulai konsultasi dengan bot. Tidak ada order atau notifyAdmin.
+        return reply(text);
+      }
     }
     if (web.type === "estimator") {
       s.paused = true;
@@ -165,6 +210,7 @@ export function handleMessage({ from, text, phone, name }) {
   if (s.paused) return { replies: [] }; // admin sedang menangani
 
   // 3) Percakapan bertahap
+  if (s.state === "plan_consultation") return handlePlanConsultation(s, input, customer);
   if (s.state === "brief") return handleBrief(s, input, customer);
   if (s.state.startsWith("est_")) return handleEstimator(s, input);
   if (s.state === "faq") {
@@ -174,9 +220,44 @@ export function handleMessage({ from, text, phone, name }) {
   }
 
   // 4) Menu utama: angka atau kata kunci
-  if (/^[1-9]$/.test(lower)) return handleMenuChoice(s, lower, customer);
+  if (/^(?:[1-9]|10)$/.test(lower)) return handleMenuChoice(s, lower, customer);
+  // Pesan kebutuhan yang lengkap diprioritaskan untuk AI/rekomendasi, bukan
+  // disalahartikan sebagai kata kunci tunggal seperti "pembayaran" atau "admin".
+  if (isProjectNeed(input)) {
+    const knowledge = findKnowledge(input);
+    const recommendation = recommendPlan(input, memory);
+    const aiReply = await askAI({ message: input, memory, knowledge });
+    if (aiReply) return reply(aiReply);
+    if (recommendation) return reply(msg.recommendationText(recommendation));
+  }
   const route = keywordRoutes.find(([pattern]) => pattern.test(lower));
   if (route) return handleMenuChoice(s, route[1], customer);
 
+  const conversationReply = findConversationReply(input);
+  if (conversationReply) return reply(conversationReply);
+
+  const knowledge = findKnowledge(input);
+  const recommendation = recommendPlan(input, memory);
+  const aiReply = await askAI({ message: input, memory, knowledge });
+  if (aiReply) return reply(aiReply);
+  if (recommendation) return reply(msg.recommendationText(recommendation));
+
   return reply(msg.fallbackText());
+}
+
+const paymentLabels = { DP: "DP", FINAL: "pelunasan", FULL: "pembayaran" };
+
+// Foto/PDF dari customer yang memiliki tagihan aktif disimpan sebagai bukti
+// menunggu verifikasi admin. Mengembalikan null bila tidak ada tagihan aktif.
+export function handlePaymentProofMessage({ from, phone, buffer, mimetype, filename }) {
+  const payment = findCustomerPayment(normalizePhone(phone || toPhone(from)));
+  if (!payment) return null;
+  const proof = savePaymentProofBuffer(payment.order_id, payment.id, { buffer, mimetype, originalname: filename || `bukti-whatsapp-${Date.now()}` });
+  if (proof === "invalid-file") return reply("Maaf, bukti pembayaran harus berupa foto (JPG/PNG/WEBP) atau PDF maksimal 5 MB.");
+  if (!proof || typeof proof === "string") return reply("Maaf, bukti pembayaran belum dapat disimpan. Silakan hubungi admin.");
+  const label = paymentLabels[payment.payment_type] || "pembayaran";
+  return {
+    replies: [`Terima kasih, bukti ${label} untuk pesanan *${payment.order_id}* sudah kami terima dan sedang diverifikasi admin.\n\nKetik *status* untuk memantau pesanan Anda.`],
+    notifyAdmin: `*BUKTI ${label.toUpperCase()} MASUK*\n\nPesanan: ${payment.order_id}\nTagihan: ${payment.id}\nNominal: Rp${payment.amount.toLocaleString("id-ID")}\n\nVerifikasi melalui dashboard /admin.`,
+  };
 }

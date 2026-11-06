@@ -23,6 +23,7 @@ export const menuItems = [
   "FAQ",
   "Kirim project brief",
   "Bicara dengan admin",
+  "Cek status pesanan",
 ];
 
 export const greeting = () =>
@@ -39,8 +40,18 @@ export const pricingText = () =>
 export const planText = (name) => {
   const plan = plans.find((p) => p.name.toLowerCase() === name.toLowerCase());
   if (!plan) return null;
-  return `Terima kasih sudah tertarik dengan paket *${plan.name}* (${plan.prefix ? `${plan.prefix} ` : ""}${plan.price}).\n\nIsinya: ${plan.features.join(", ")}.\n\n_${pricingDisclaimer}_\n\nCeritakan singkat project Anda, atau ketik *8* untuk mengisi project brief. Ketik *9* jika ingin bicara langsung dengan admin.`;
+  return `Terima kasih sudah tertarik dengan paket *${plan.name}* (${plan.prefix ? `${plan.prefix} ` : ""}${plan.price}).\n\n*Yang Anda dapatkan:*\n${plan.features.map((feature) => `• ${feature}`).join("\n")}\n\n_${pricingDisclaimer}_\n\nAgar saya dapat mengecek kecocokannya, ceritakan kebutuhan Anda (misalnya: jenis aplikasi, fitur utama, target pengguna, dan deadline). Konsultasi ini masih dengan bot; ketik *admin* hanya bila ingin diteruskan ke admin.`;
 };
+
+export const planConsultationText = (name, needs) => {
+  const plan = plans.find((item) => item.name.toLowerCase() === name.toLowerCase());
+  if (!plan) return fallbackText();
+  const price = [plan.prefix, plan.price].filter(Boolean).join(" ");
+  return `Terima kasih, saya catat kebutuhan Anda: _${needs}_.\n\nPaket *${plan.name}* (${price}) ${plan.description.toLowerCase()} Fitur yang termasuk dalam paket ini:\n${plan.features.map((feature) => `• ${feature}`).join("\n")}\n\nHarga dan cakupan final tetap menyesuaikan detail fitur, kompleksitas, teknologi, serta deadline. Jika ingin saya bantu mencatat kebutuhan lebih lengkap, ketik *brief*. Ketik *admin* hanya jika Anda ingin konsultasi diteruskan ke tim kami.`;
+};
+
+export const recommendationText = (recommendation) =>
+  `Berdasarkan kebutuhan Anda, paket yang paling mendekati adalah *${recommendation.name}*. ${recommendation.reason}\n\nFitur yang relevan:\n${recommendation.features.map((feature) => `• ${feature}`).join("\n")}\n\nIni rekomendasi awal; ketik *brief* agar kebutuhan dicatat lengkap, atau *admin* untuk konsultasi dengan tim.`;
 
 export const portfolioText = () =>
   `*Contoh project kami*\n\n${projects.map((p) => `• *${p.title}* (${p.status}) — ${p.technologies.join(", ")}`).join("\n")}\n\nLihat tampilan lengkapnya di website kami.${footer}`;
@@ -86,6 +97,13 @@ export const handoffText = () =>
 
 export const fallbackText = () => "Maaf, saya belum paham pesan itu. Balas dengan angka dari menu, atau ketik *menu*.";
 export const invalidChoiceText = (max) => `Pilihan tidak valid. Balas dengan angka 1–${max}.`;
+
+export const customerOrderStatusText = (orders) => orders.length
+  ? `*Status pesanan Anda*\n\n${orders.map((order) => `• *${order.id}*\n  Project: ${order.brief?.project || order.estimate?.platform || "-"}\n  Status: *${String(order.status).replaceAll("_", " ")}*`).join("\n\n")}\n\nKetik *status <nomor pesanan>* untuk melihat satu pesanan.`
+  : "Belum ada pesanan yang terhubung dengan nomor WhatsApp ini. Pastikan Anda menghubungi bot menggunakan nomor yang dipakai saat memesan.";
+
+export const customerOrderDetailStatusText = (order) =>
+  `*Status pesanan ${order.id}*\n\nProject: ${order.brief?.project || order.estimate?.platform || "-"}\nStatus: *${String(order.status).replaceAll("_", " ")}*\n${order.brief?.deadline ? `Deadline: ${order.brief.deadline}\n` : ""}\nAdmin akan menghubungi Anda jika ada pembaruan.`;
 
 // ---- Pesanan untuk admin ----
 const wib = (iso) => new Date(iso).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" }) + " WIB";

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+server/data/payments.json
+server/data/*.db
+server/data/*.db-*
+server/uploads/
+.wwebjs_auth/
+.wwebjs_cache/
+bot/data/*.csv
+bot/data/orders.json
